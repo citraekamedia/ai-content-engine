@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Day = {
   day:number; title:string; objective:string; format:string;
@@ -16,6 +16,9 @@ export default function Home(){
   const [loading,setLoading]=useState(false);
   const [message,setMessage]=useState("Mulai dengan 1 konten preview.");
   const [approved,setApproved]=useState(false);
+  const [instagram,setInstagram]=useState<{connected:boolean;username?:string;accountType?:string}>({connected:false});
+
+  useEffect(()=>{ fetch("/api/instagram/status").then(r=>r.json()).then(setInstagram).catch(()=>{}); },[]);
 
   async function generate(count:number){
     setLoading(true);
@@ -81,10 +84,15 @@ export default function Home(){
           <div className="small">Brief → 1 Preview → Review → Expand → Calendar → Instagram</div>
           <div className="actions">
             <button className="btn secondary" onClick={()=>setMessage("Review mode aktif. Periksa hook, caption, CTA, hashtag, dan image brief.")} disabled={!days.length}>Review Preview</button>
-            <button className="btn secondary" onClick={()=>setMessage("Instagram connector belum diaktifkan.")}>Instagram Setup</button>
+            {instagram.connected ? <button className="btn secondary" onClick={()=>setMessage(`Instagram @${instagram.username || ""} terhubung.`)}>Instagram Connected</button> : <a className="btn secondary" href="/api/instagram/connect">Connect Instagram</a>}
           </div>
         </section>
       </div>
+
+      <section className="card" style={{marginTop:16}}>
+        <h3>Instagram connection</h3>
+        {instagram.connected ? <div className="small">Terhubung sebagai <strong>@{instagram.username}</strong> ({instagram.accountType || "Professional"}). Token disimpan sebagai cookie HTTP-only dan tidak ditampilkan ke browser.</div> : <div className="small muted">Belum terhubung. Pastikan Meta App sudah dibuat dan environment variables Instagram sudah diisi di Vercel.</div>}
+      </section>
 
       <section className="card" style={{marginTop:16}}>
         <div className="top" style={{marginBottom:10}}>
