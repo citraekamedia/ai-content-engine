@@ -20,7 +20,10 @@ function fallback(count:number){
 export async function POST(req:Request){
   try{
     const body=await req.json();
-    const {brand="My Brand",niche="Bisnis",audience="Target audience",tone="Friendly",count=30}=body;
+    const {brand="My Brand",niche="Bisnis",audience="Target audience",tone="Friendly",count=1}=body;
+    const allowed=[1,7,14,30];
+    if(!allowed.includes(count)) return NextResponse.json({error:"Count harus 1, 7, 14, atau 30."},{status:400});
+
     const apiKey=process.env.GEMINI_API_KEY;
     if(!apiKey) return NextResponse.json({
       days:fallback(count),
