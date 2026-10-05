@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 
 type Day = {
@@ -6,39 +7,30 @@ type Day = {
   hook:string; caption:string; cta:string; hashtags:string[]; image_brief:string
 };
 
-const seed:Day[] = Array.from({length:30},(_,i)=>({
-  day:i+1,
-  title:`Content idea ${i+1}`,
-  objective:["Awareness","Engagement","Education","Conversion"][i%4],
-  format:["Carousel","Single Image","Reel"][i%3],
-  hook:`Hook untuk hari ${i+1}`,
-  caption:`Caption AI akan muncul di sini untuk hari ${i+1}.`,
-  cta:"Ajak audiens berkomentar.",
-  hashtags:["#content","#instagram"],
-  image_brief:"Visual premium yang sesuai dengan caption."
-}));
-
 export default function Home(){
   const [brand,setBrand]=useState("My Brand");
   const [niche,setNiche]=useState("Bisnis");
   const [audience,setAudience]=useState("Target audience");
   const [tone,setTone]=useState("Friendly");
-  const [days,setDays]=useState<Day[]>(seed);
+  const [days,setDays]=useState<Day[]>([]);
   const [loading,setLoading]=useState(false);
-  const [message,setMessage]=useState("30-day campaign siap dibuat.");
+  const [message,setMessage]=useState("Mulai dengan 1 konten preview.");
+  const [approved,setApproved]=useState(false);
 
-  async function generate(){
-    setLoading(true); setMessage("Membuat content plan dengan Gemini...");
+  async function generate(count:number){
+    setLoading(true);
+    setMessage(count===1 ? "Membuat 1 konten preview dengan Gemini..." : `Membuat ${count} konten...`);
     try{
       const res=await fetch("/api/campaign",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({brand,niche,audience,tone,count:30})
+        body:JSON.stringify({brand,niche,audience,tone,count})
       });
       const data=await res.json();
       if(!res.ok) throw new Error(data.error||"Gagal generate");
       setDays(data.days);
-      setMessage("30 konten berhasil dibuat.");
+      setApproved(count>1);
+      setMessage(count===1 ? "Preview siap. Review dulu sebelum membuat batch." : `${count} konten berhasil dibuat.`);
     }catch(e){
       setMessage(e instanceof Error ? e.message : "Terjadi error");
     }finally{setLoading(false);}
@@ -54,50 +46,77 @@ export default function Home(){
     </aside>
     <main className="main">
       <div className="top">
-        <div><div className="eyebrow">Content automation</div><div className="title">30-Day Campaign Engine</div>
-          <div className="muted">Generate strategy, captions, and image briefs in one batch.</div>
+        <div>
+          <div className="eyebrow">Content automation</div>
+          <div className="title">Content Preview Engine</div>
+          <div className="muted">Test one content first. Expand to a batch only after the preview looks right.</div>
         </div>
-        <button className="btn primary" onClick={generate} disabled={loading}>
-          {loading?"Generating...":"Generate 30 Days"}
+        <button className="btn primary" onClick={()=>generate(1)} disabled={loading}>
+          {loading ? "Generating..." : "Generate Preview"}
         </button>
       </div>
 
       <section className="grid">
-        <div className="card"><div className="muted small">Campaign</div><div className="metric">30 days</div></div>
-        <div className="card"><div className="muted small">Content ready</div><div className="metric">{days.length}</div></div>
-        <div className="card"><div className="muted small">Format mix</div><div className="metric">3</div></div>
-        <div className="card"><div className="muted small">Status</div><div className="metric" style={{fontSize:18}}>{message}</div></div>
+        <div className="card"><div className="muted small">Mode</div><div className="metric">Preview first</div></div>
+        <div className="card"><div className="muted small">Content generated</div><div className="metric">{days.length}</div></div>
+        <div className="card"><div className="muted small">Batch status</div><div className="metric" style={{fontSize:18}}>{approved ? "Expanded" : "Not expanded"}</div></div>
+        <div className="card"><div className="muted small">Status</div><div className="metric" style={{fontSize:16}}>{message}</div></div>
       </section>
 
       <div className="content-grid">
-        <section className="card"><h3>Campaign setup</h3><div className="form-grid">
-          <div className="field"><label>Brand</label><input value={brand} onChange={e=>setBrand(e.target.value)}/></div>
-          <div className="field"><label>Niche</label><input value={niche} onChange={e=>setNiche(e.target.value)}/></div>
-          <div className="field"><label>Target audience</label><input value={audience} onChange={e=>setAudience(e.target.value)}/></div>
-          <div className="field"><label>Tone</label><select value={tone} onChange={e=>setTone(e.target.value)}>
-            <option>Friendly</option><option>Professional</option><option>Bold</option><option>Educational</option>
-          </select></div>
-        </div></section>
+        <section className="card">
+          <h3>Campaign setup</h3>
+          <div className="form-grid">
+            <div className="field"><label>Brand</label><input value={brand} onChange={e=>setBrand(e.target.value)}/></div>
+            <div className="field"><label>Niche</label><input value={niche} onChange={e=>setNiche(e.target.value)}/></div>
+            <div className="field"><label>Target audience</label><input value={audience} onChange={e=>setAudience(e.target.value)}/></div>
+            <div className="field"><label>Tone</label><select value={tone} onChange={e=>setTone(e.target.value)}>
+              <option>Friendly</option><option>Professional</option><option>Bold</option><option>Educational</option>
+            </select></div>
+          </div>
+        </section>
 
         <section className="hero">
-          <h2>Pipeline aktif</h2>
-          <div className="small">Brief → Content Plan → Caption → Image Brief → Review → Schedule → Instagram</div>
+          <h2>Controlled generation</h2>
+          <div className="small">Brief → 1 Preview → Review → Expand → Calendar → Instagram</div>
           <div className="actions">
-            <button className="btn secondary" onClick={()=>setMessage("Mode review aktif. Auto-post belum diaktifkan.")}>Review Mode</button>
-            <button className="btn secondary" onClick={()=>setMessage("Instagram connector siap setelah credential ditambahkan.")}>Instagram Setup</button>
+            <button className="btn secondary" onClick={()=>setMessage("Review mode aktif. Periksa hook, caption, CTA, hashtag, dan image brief.")} disabled={!days.length}>Review Preview</button>
+            <button className="btn secondary" onClick={()=>setMessage("Instagram connector belum diaktifkan.")}>Instagram Setup</button>
           </div>
         </section>
       </div>
 
       <section className="card" style={{marginTop:16}}>
         <div className="top" style={{marginBottom:10}}>
-          <div><h3 style={{margin:"0 0 4px"}}>Content calendar</h3><div className="muted small">30 hasil batch generation</div></div>
+          <div><h3 style={{margin:"0 0 4px"}}>Preview / Content batch</h3><div className="muted small">{days.length ? `${days.length} content generated` : "Belum ada content generated"}</div></div>
         </div>
-        <div className="days">{days.map(d=><div className="day" key={d.day}>
-          <div className="daynum">DAY {d.day}</div><strong>{d.title}</strong>
-          <div className="small muted" style={{marginTop:6}}>{d.objective} · {d.format}</div>
-          <div className="status">Draft</div>
-        </div>)}</div>
+
+        {!days.length ? (
+          <div className="empty">Klik <strong>Generate Preview</strong> untuk membuat satu konten terlebih dahulu.</div>
+        ) : (
+          <div className="days">{days.map(d=><div className="day" key={d.day}>
+            <div className="daynum">DAY {d.day}</div>
+            <strong>{d.title}</strong>
+            <div className="small muted" style={{marginTop:6}}>{d.objective} · {d.format}</div>
+            <div style={{marginTop:10}}><strong>Hook:</strong> {d.hook}</div>
+            <div style={{marginTop:8}}><strong>Caption:</strong> {d.caption}</div>
+            <div style={{marginTop:8}}><strong>CTA:</strong> {d.cta}</div>
+            <div style={{marginTop:8}}><strong>Image brief:</strong> {d.image_brief}</div>
+            <div className="small muted" style={{marginTop:8}}>{d.hashtags.join(" ")}</div>
+            <div className="status">{days.length===1 ? "Preview" : "Draft"}</div>
+          </div>)}</div>
+        )}
+
+        {days.length===1 && (
+          <div style={{marginTop:18}}>
+            <div className="small muted" style={{marginBottom:10}}>Kalau preview sudah cocok, pilih ukuran batch:</div>
+            <div className="actions">
+              <button className="btn secondary" onClick={()=>generate(7)} disabled={loading}>Generate 7</button>
+              <button className="btn secondary" onClick={()=>generate(14)} disabled={loading}>Generate 14</button>
+              <button className="btn primary" onClick={()=>generate(30)} disabled={loading}>Generate 30</button>
+            </div>
+          </div>
+        )}
       </section>
     </main>
   </div>;
