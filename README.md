@@ -1,26 +1,28 @@
 # AI Content Engine
 
-MVP untuk AI content planning 30 hari.
+MVP untuk AI content planning dengan alur preview-first.
 
 ## Stack
 - Next.js
 - Gemini API
 - Vercel
 - GitHub
+- Instagram OAuth
 
 ## Environment
-Set `GEMINI_API_KEY` di Vercel Project Environment Variables.
+Set `GEMINI_API_KEY`, `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `INSTAGRAM_REDIRECT_URI`, dan `APP_URL` di Vercel Project Environment Variables.
 
 ## Current MVP
-- 30-day content generation
+- Generate 1 content preview terlebih dahulu
+- Setelah preview direview, dapat diperluas menjadi 7, 14, atau 30 content
 - Structured content plan
 - Caption + hook + CTA + hashtags
 - Image brief yang mengikuti caption
-- Dashboard + content calendar preview
+- Instagram OAuth connection
 
 ## Next
 - Image provider
 - Storage/database
-- Instagram OAuth + publishing
+- Instagram publishing
 - Scheduler/queue
 - Analytics
